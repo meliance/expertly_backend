@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from users.serializers import UserSerializer
+from accounts.serializers import UserSerializer
 
 # Create your views here.
 @api_view(['POST'])

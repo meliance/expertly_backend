@@ -12,12 +12,12 @@ class User(AbstractUser):
 
 
 class ClientRegistration(models.Model):
-    user = models.OneToOneField('users.User', on_delete=models.CASCADE, primary_key=True)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, primary_key=True)
     bio = models.TextField(blank=True)
     location = models.CharField(max_length=63, blank=True)
 
 class ExpertRegistration(models.Model):
-    user = models.OneToOneField('users.User', on_delete=models.CASCADE, primary_key=True)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, primary_key=True)
     expertise = models.CharField(max_length=120)
     bio = models.TextField()
     hourly_rate = models.DecimalField(max_digits=6, decimal_places=2)
