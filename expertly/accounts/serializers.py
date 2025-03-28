@@ -20,7 +20,6 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
     
     def update(self, instance, validated_data):
-        # Handle password separately
         password = validated_data.pop('password', None)
         if password:
             instance.set_password(password)
@@ -30,74 +29,51 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-# For creation-only serializers (if needed)
 class ClientRegistrationSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-
+    
     class Meta:
         model = ClientRegistration
         fields = ['user', 'bio', 'location']
+        # No 'id' field needed here since we're creating new records
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user_serializer = UserSerializer(data=user_data)
+        if user_serializer.is_valid():
+            user = user_serializer.save(is_client=True)
+            return ClientRegistration.objects.create(user=user, **validated_data)
+        raise serializers.ValidationError(user_serializer.errors)
 
 class ClientDetailSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
     
     class Meta:
         model = ClientRegistration
-        fields = '__all__'
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop('user', {})
-        user = instance.user
-        
-        # Update user fields
-        for attr, value in user_data.items():
-            if attr == 'password' and value:
-                user.set_password(value)
-            else:
-                setattr(user, attr, value)
-        user.save()
-        
-        # Update client fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        
-        return instance
-    
-class ExpertRegistrationSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+        fields = ['user_id', 'email', 'bio', 'location']
+        read_only_fields = ['user_id', 'email']
 
+class ExpertRegistrationSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    
     class Meta:
         model = ExpertRegistration
-        fields = ['user', 'expertise', 'bio', 'hourly_rate', 'experiance_years']
+        fields = ['user', 'expertise', 'bio', 'hourly_rate', 'experience_years', 
+                 'license_file', 'degree_file', 'certificate_file', 'id_proof_file']
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user_serializer = UserSerializer(data=user_data)
+        if user_serializer.is_valid():
+            user = user_serializer.save(is_expert=True)
+            return ExpertRegistration.objects.create(user=user, **validated_data)
+        raise serializers.ValidationError(user_serializer.errors)
 
 class ExpertDetailSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-    
     class Meta:
         model = ExpertRegistration
-        fields = '__all__'
-        read_only_fields = ['id', 'created_at', 'updated_at', 'is_approved']  # is_approved might need admin approval
-        
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop('user', {})
-        user = instance.user
-        
-        # Update user fields
-        for attr, value in user_data.items():
-            if attr == 'password' and value:
-                user.set_password(value)
-            else:
-                setattr(user, attr, value)
-        user.save()
-        
-        # Update expert fields
-        for attr, value in validated_data.items():
-            # Add any special field handling here
-            setattr(instance, attr, value)
-        instance.save()
-        
-        return instance
-
-
+        fields = ['id', 'expertise', 'bio', 'hourly_rate', 'experience_years',
+                 'license_file', 'degree_file', 'certificate_file', 'id_proof_file',
+                 'is_approved', 'documents_verified']
+        read_only_fields = ['id', 'is_approved', 'documents_verified']
