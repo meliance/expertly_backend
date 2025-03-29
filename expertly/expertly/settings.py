@@ -29,6 +29,11 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "api",
     "accounts",
+    'scheduling',
+    'appointment',
+    'chat',
+    'notification',
+    'feedback',
 ]
 
 MIDDLEWARE = [
