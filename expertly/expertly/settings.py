@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_simplejwt",
     "api",
     "accounts",
 ]
@@ -74,10 +75,10 @@ WSGI_APPLICATION = "expertly.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'expertly',         # Database name (you just created)
+        'NAME': 'expertly',         # Database name 
         'USER': 'postgres',       # PostgreSQL username
         'PASSWORD': 'melakmu66',
-        'HOST': 'localhost',    # Or your PostgreSQL server IP
+        'HOST': 'localhost',    
         'PORT': '5432',         # Default PostgreSQL port
     }
 }

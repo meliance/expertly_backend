@@ -1,214 +1,201 @@
-from rest_framework import generics, status, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied, NotFound
-from .models import User, ClientRegistration, ExpertRegistration
+from rest_framework.views import APIView
+from .models import User, Client, Expert, ExpertDocument
 from .serializers import (
-    UserSerializer, 
-    ClientRegistrationSerializer,
-    ClientDetailSerializer, 
-    ExpertDetailSerializer,
-    ExpertRegistrationSerializer
+    UserSerializer, DetailedUserSerializer, ClientSerializer, ExpertSerializer,
+    LoginSerializer, RegisterSerializer, ChangePasswordSerializer,
+    ClientUpdateSerializer, ExpertUpdateSerializer, ExpertApprovalSerializer,
+    ExpertDetailSerializer, ExpertDocumentSerializer
 )
+from rest_framework.decorators import api_view, permission_classes
+from django.contrib.auth import update_session_auth_hash
 
-class UserListCreateAPIView(generics.ListCreateAPIView):
+class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+class LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]  # Default to allow any
-    
-    def get_permissions(self):
-        # Only admins can list users
-        if self.request.method == 'GET':
-            return [permissions.IsAdminUser()]
-        return [permissions.AllowAny()]
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response({
-                'status': 'success',
-                'data': serializer.data
-            })
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response({
-            'status': 'success',
-            'count': len(serializer.data),
-            'data': serializer.data
-        }, status=status.HTTP_200_OK)
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({
-                'status': 'error',
-                'errors': serializer.errors,
-                'message': 'Validation failed'
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-        try:
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response({
-                'status': 'success',
-                'message': 'User created successfully',
-                'data': serializer.data
-            }, status=status.HTTP_201_CREATED, headers=headers)
-        except Exception as e:
-            return Response({
-                'status': 'error',
-                'message': 'User creation failed',
-                'detail': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def perform_create(self, serializer):
-        user = serializer.save()
-        user.set_password(user.password)
-        user.save()
-
-
-class ProfileDetailMixin:
-    """Common functionality for client/expert profile views"""
-    
-    def get_object(self):
-        pk = self.kwargs.get('pk')
-        
-        # Handle 'me' endpoint for authenticated users
-        if pk is None or str(pk).lower() == 'me':
-            if not self.request.user.is_authenticated:
-                raise PermissionDenied("Authentication required")
-                
-            try:
-                return self.get_profile_model().objects.get(user=self.request.user)
-            except self.get_profile_model().DoesNotExist:
-                raise NotFound(f"{self.get_profile_model().__name__} not found")
-        
-        # Admin access to specific profiles
-        if not self.request.user.is_staff:
-            raise PermissionDenied("Only staff can view other profiles")
-            
-        try:
-            return self.get_profile_model().objects.get(pk=pk)
-        except self.get_profile_model().DoesNotExist:
-            raise NotFound("Profile not found")
-
-class ClientRegistrationAPIView(generics.CreateAPIView):
-    """
-    API endpoint for client registration
-    """
-    serializer_class = ClientRegistrationSerializer
-    permission_classes = [permissions.AllowAny]  # Allow registration without auth
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response({
-                'status': 'success',
-                'message': 'Client registered successfully',
-                'data': serializer.data
-            }, status=status.HTTP_201_CREATED, headers=headers)
-        except Exception as e:
-            return Response({
-                'status': 'error',
-                'message': 'Client registration failed',
-                'detail': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-    serializer_class = ClientRegistrationSerializer
-    permission_classes = [permissions.AllowAny]  # Allow registration without auth
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response({
-                'status': 'success',
-                'message': 'Client registered successfully',
-                'data': serializer.data
-            }, status=status.HTTP_201_CREATED, headers=headers)
-        except Exception as e:
-            return Response({
-                'status': 'error',
-                'message': 'Client registration failed',
-                'detail': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-    
-    def perform_create(self, serializer):
-        # This will use the create method defined in ClientRegistrationSerializer
-        serializer.save()
-
-class ClientDetailAPIView(generics.RetrieveAPIView):
-    serializer_class = ClientDetailSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
-    def get_object(self):
-        pk = self.kwargs.get('pk')
-        
-        # Handle 'me' endpoint
-        if str(pk) == 'me':
-            pk = self.request.user.pk
-
-        try:
-            # Get the user first
-            user = User.objects.get(pk=pk)
-            # Return the client profile or raise 404
-            return user.client_profile
-        except (User.DoesNotExist, ClientRegistration.DoesNotExist):
-            raise NotFound("Profile not found")
-
-
-class ExpertDetailAPIView(ProfileDetailMixin, generics.RetrieveAPIView):
-    serializer_class = ExpertDetailSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    
-    def get_profile_model(self):
-        return ExpertRegistration
-
-
-class ExpertRegistrationAPIView(generics.CreateAPIView):
-    serializer_class = ExpertRegistrationSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    def perform_create(self, serializer):
-        if self.request.user.is_expert:
-            raise PermissionDenied("You are already registered as an expert")
-            
-        serializer.save(user=self.request.user)
-        self.request.user.is_expert = True
-        self.request.user.save()
-
-
-# View instances
-user_list_create_api_view = UserListCreateAPIView.as_view()
-client_registration_api_view = ClientRegistrationAPIView.as_view()
-client_detail_api_view = ClientDetailAPIView.as_view()
-expert_detail_api_view = ExpertDetailAPIView.as_view()
-expert_registration_api_view = ExpertRegistrationAPIView.as_view()
-
-class ExpertDetailApiView(generics.RetrieveAPIView):
-    serializer_class = ExpertDetailSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
     def get_object(self):
-        try:
-            if self.kwargs.get('pk') == 'me':
-                user = self.request.user
-            else:
-                user = User.objects.get(pk=self.kwargs.get('pk'))
-            
-            return user.expert_profile  # Changed to match related_name
-            
-        except User.DoesNotExist:
-            raise NotFound("User not found")
-        except ExpertRegistration.DoesNotExist:
-            raise NotFound("Expert profile not found")
+        return self.request.user
     
-expert_detail_api_view = ExpertDetailApiView.as_view()
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save()
+
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all().order_by('-created_at')
+    serializer_class = DetailedUserSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def put(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            update_session_auth_hash(request, user)
+            return Response({'status': 'password changed'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ClientProfileView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return ClientUpdateSerializer
+        return ClientSerializer
+    
+    def get_object(self):
+        return self.request.user.client_profile
+    
+    def perform_destroy(self, instance):
+        user = instance.user
+        user.is_active = False
+        user.save()
+
+class ClientDetailView(generics.RetrieveAPIView):
+    queryset = Client.objects.select_related('user').filter(user__is_active=True)
+    serializer_class = ClientSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+            return [permissions.IsAdminUser()]
+        return [permissions.IsAuthenticated()]
+
+class ExpertProfileView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Expert.objects.all()
+    serializer_class = ExpertSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return ExpertUpdateSerializer
+        return ExpertSerializer
+    
+    def get_object(self):
+        return self.request.user.expert_profile
+    
+    def perform_destroy(self, instance):
+        user = instance.user
+        user.is_active = False
+        user.save()
+
+class ExpertPublicProfileView(generics.RetrieveAPIView):
+    queryset = Expert.objects.select_related('user').filter(
+        is_approved=True,
+        user__is_active=True
+    )
+    serializer_class = ExpertDetailSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = 'pk'
+
+class ExpertAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Expert.objects.select_related('user').filter(user__is_active=True)
+    serializer_class = ExpertDetailSerializer
+    permission_classes = [permissions.IsAdminUser]
+    
+    def perform_destroy(self, instance):
+        instance.user.is_active = False
+        instance.user.save()
+
+class ExpertListView(generics.ListAPIView):
+    queryset = Expert.objects.filter(is_approved=True, user__is_active=True)
+    serializer_class = ExpertSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class ExpertDetailView(generics.RetrieveUpdateAPIView):
+    queryset = Expert.objects.filter(is_approved=True, user__is_active=True)
+    serializer_class = ExpertSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH'] and self.request.user.is_staff:
+            return ExpertApprovalSerializer
+        return ExpertSerializer
+
+class AdminExpertApprovalView(generics.ListAPIView):
+    queryset = Expert.objects.filter(is_approved=False, user__is_active=True)
+    serializer_class = ExpertSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+class AdminUserListView(generics.ListAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_type = self.request.query_params.get('user_type', None)
+        if user_type:
+            queryset = queryset.filter(user_type=user_type)
+        return queryset
+
+class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
+    
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save()
+
+class ExpertDocumentListView(generics.ListCreateAPIView):
+    serializer_class = ExpertDocumentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        expert_id = self.kwargs['expert_id']
+        return ExpertDocument.objects.filter(expert_id=expert_id)
+    
+    def perform_create(self, serializer):
+        expert_id = self.kwargs['expert_id']
+        expert = Expert.objects.get(id=expert_id)
+        if expert.user != self.request.user and not self.request.user.is_staff:
+            raise permissions.PermissionDenied("You can only add documents to your own profile")
+        serializer.save(expert=expert)
+
+class ExpertDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ExpertDocumentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return ExpertDocument.objects.all()
+    
+    def perform_update(self, serializer):
+        if serializer.instance.expert.user != self.request.user and not self.request.user.is_staff:
+            raise permissions.PermissionDenied("You can only update your own documents")
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        if instance.expert.user != self.request.user and not self.request.user.is_staff:
+            raise permissions.PermissionDenied("You can only delete your own documents")
+        instance.delete()
+
+class ExpertDocumentVerificationView(generics.UpdateAPIView):
+    serializer_class = ExpertDocumentSerializer
+    permission_classes = [permissions.IsAdminUser]
+    
+    def get_queryset(self):
+        return ExpertDocument.objects.all()
+    
+    def perform_update(self, serializer):
+        serializer.save(is_verified=True)
