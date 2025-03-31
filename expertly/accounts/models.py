@@ -17,19 +17,12 @@ def expert_document_path(instance, filename):
     """Returns path for expert documents"""
     return f'experts/{instance.expert.user.id}/documents/{filename}'
 
-def save(self, *args, **kwargs):
-    if not self.pk:  # Only for new users
-        if hasattr(self, 'is_superuser') and self.is_superuser:
-            self.is_client = False  # Or True, depending on your logic
-    super().save(*args, **kwargs)
-
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ('client', 'Client'),
         ('expert', 'Expert'),
     )
-    is_client = models.BooleanField(null=True)
-    is_expert = models.BooleanField(null=True)
+
     # Core fields
     user_type = models.CharField(
         max_length=10, 
@@ -102,7 +95,7 @@ class Expert(models.Model):
     )
     specialization = models.CharField(max_length=100)
     qualifications = models.TextField()
-    experience_years = models.PositiveIntegerField()
+    experience_years = models.PositiveIntegerField(blank=True, null=True)
     hourly_rate = models.DecimalField(
         max_digits=10, 
         decimal_places=2,

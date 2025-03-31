@@ -80,6 +80,10 @@ class ClientDetailView(generics.RetrieveAPIView):
         if self.request.method in ['PUT', 'PATCH', 'DELETE']:
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
+class ClientListView(generics.ListAPIView):
+    queryset = Client.objects.select_related('user').filter(user__user_type="client")
+    serializer_class = ClientSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 class ExpertProfileView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Expert.objects.all()
@@ -118,7 +122,7 @@ class ExpertAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.user.save()
 
 class ExpertListView(generics.ListAPIView):
-    queryset = Expert.objects.filter(is_approved=True, user__is_active=True)
+    queryset = Expert.objects.filter(is_approved=True, user__is_active=True, user__user_type="Expert" )
     serializer_class = ExpertSerializer
     permission_classes = [permissions.IsAuthenticated]
 

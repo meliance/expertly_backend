@@ -28,15 +28,14 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         }
 
 class DetailedUserSerializer(serializers.ModelSerializer):
-    is_client = serializers.SerializerMethodField()
-    is_expert = serializers.SerializerMethodField()
+    user_type = serializers.CharField(source='get_user_type_display')
     expert_status = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 
                  'user_type', 'phone_number', 'profile_picture', 'is_verified',
-                 'created_at', 'is_client', 'is_expert', 'expert_status']
+                 'created_at', 'expert_status']
 
     def get_is_client(self, obj):
         return hasattr(obj, 'client_profile')
@@ -168,17 +167,18 @@ class ExpertDocumentSerializer(serializers.ModelSerializer):
 class ExpertDetailSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     documents = ExpertDocumentSerializer(many=True, read_only=True)
-    appointment_count = serializers.SerializerMethodField()
-    available_schedules = serializers.SerializerMethodField()
-    upcoming_appointments = serializers.SerializerMethodField()
+    # appointment_count = serializers.SerializerMethodField()
+    # available_schedules = serializers.SerializerMethodField()
+    # upcoming_appointments = serializers.SerializerMethodField()
     
     class Meta:
         model = Expert
         fields = '__all__'
-        read_only_fields = ['id', 'user', 'appointment_count', 
-                          'available_schedules', 'upcoming_appointments',
-                          'has_license', 'has_degree', 'has_masters',
-                          'has_certificates', 'has_cv']
+        read_only_fields = ['id', 'user'] 
+        # 'appointment_count', 
+        #                   'available_schedules', 'upcoming_appointments',
+        #                   'has_license', 'has_degree', 'has_masters',
+        #                   'has_certificates', 'has_cv']
     
     has_license = serializers.SerializerMethodField()
     has_degree = serializers.SerializerMethodField()
@@ -186,22 +186,22 @@ class ExpertDetailSerializer(serializers.ModelSerializer):
     has_certificates = serializers.SerializerMethodField()
     has_cv = serializers.SerializerMethodField()
     
-    def get_appointment_count(self, obj):
-        return obj.appointments.count()
+    # def get_appointment_count(self, obj):
+    #     return obj.appointments.count()
     
-    def get_available_schedules(self, obj):
-        from schedules.serializers import ScheduleSerializer
-        schedules = obj.schedules.filter(is_available=True)
-        return ScheduleSerializer(schedules, many=True).data
+    # def get_available_schedules(self, obj):
+    #     from schedules.serializers import ScheduleSerializer
+    #     schedules = obj.schedules.filter(is_available=True)
+    #     return ScheduleSerializer(schedules, many=True).data
     
-    def get_upcoming_appointments(self, obj):
-        from appointments.serializers import AppointmentSerializer
-        from django.utils import timezone
-        appointments = obj.appointments.filter(
-            scheduled_time__gte=timezone.now(),
-            status='confirmed'
-        ).order_by('scheduled_time')[:5]
-        return AppointmentSerializer(appointments, many=True).data
+    # def get_upcoming_appointments(self, obj):
+    #     from appointments.serializers import AppointmentSerializer
+    #     from django.utils import timezone
+    #     appointments = obj.appointments.filter(
+    #         scheduled_time__gte=timezone.now(),
+    #         status='confirmed'
+    #     ).order_by('scheduled_time')[:5]
+    #     return AppointmentSerializer(appointments, many=True).data
     
     def get_has_license(self, obj):
         return obj.documents.filter(document_type='license', is_verified=True).exists()
@@ -243,6 +243,25 @@ class LoginSerializer(serializers.Serializer):
         }
 
 class RegisterSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        validated_data.pop('password2')
+        user_type = validated_data.get('user_type', 'client')
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            user_type=user_type,
+            phone_number=validated_data.get('phone_number', ''),
+        )
+        
+        if user_type == 'expert':
+            Expert.objects.create(user=user)
+        elif user_type == 'client':
+            Client.objects.create(user=user)
+            
+        return user
     password = serializers.CharField(
         write_only=True,
         required=True,
