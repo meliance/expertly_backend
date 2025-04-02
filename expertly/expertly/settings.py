@@ -31,6 +31,11 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "api",
     "accounts",
+    'scheduling',
+    'appointment',
+    'chat',
+    'notification',
+    'feedback',
 ]
 
 MIDDLEWARE = [
