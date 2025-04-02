@@ -1,15 +1,14 @@
-
 from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('api/', include('api.urls')),
-    path('api/accounts', include('accounts.urls')),
-    path('api/scheduling', include('scheduling.urls')),
-    path('api/appointment', include('appointment.urls')),
-    path('api/chat', include('chat.urls')),  # Ensure the path ends with a slash
-     path('api/notification', include('notification.urls')), 
-      path('api/feedback', include('feedback.urls')), 
+    path('api/accounts/', include('accounts.urls')),  # Added trailing slash
+    path('api/accounts/', include('accounts.urls')),
+    path('api/scheduling/', include('scheduling.urls')),
+    path('api/appointment/', include('appointment.urls')),
+    path('api/chat/', include('chat.urls')),  # Ensure the path ends with a slash
+    path('api/notification/', include('notification.urls')), 
+    path('api/feedback/', include('feedback.urls')), 
 ]
-
