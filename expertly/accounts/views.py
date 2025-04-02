@@ -1,13 +1,14 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import User, Client, Expert, ExpertDocument
+from .models import User, Client, Expert
 from .serializers import (
     UserSerializer, DetailedUserSerializer, ClientSerializer, ExpertSerializer,
     LoginSerializer, RegisterSerializer, ChangePasswordSerializer,
     ClientUpdateSerializer, ExpertUpdateSerializer, ExpertApprovalSerializer,
     ExpertDetailSerializer, ExpertDocumentSerializer
 )
+from documents.models import ExpertDocument
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import update_session_auth_hash
 

@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, Client, Expert, ExpertDocument
+from .models import User, Client, Expert
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
+from documents.models import ExpertDocument
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

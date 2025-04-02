@@ -5,8 +5,6 @@ from django.core.validators import (
     MaxValueValidator,
     FileExtensionValidator
 )
-from django.conf import settings
-import os
 
 # File upload path functions
 def profile_picture_path(instance, filename):
@@ -125,44 +123,3 @@ class Expert(models.Model):
 
     def __str__(self):
         return f"Expert: {self.user.username} ({self.specialization})"
-
-class ExpertDocument(models.Model):
-    DOCUMENT_TYPES = (
-        ('license', 'Professional License'),
-        ('degree', 'Academic Degree'),
-        ('certificate', 'Professional Certificate'),
-        ('id_proof', 'Government ID'),
-        ('cv', 'Curriculum Vitae'),
-    )
-    
-    expert = models.ForeignKey(
-        Expert,
-        on_delete=models.CASCADE,
-        related_name='documents'
-    )
-    document_type = models.CharField(
-        max_length=20, 
-        choices=DOCUMENT_TYPES
-    )
-    file = models.FileField(
-        upload_to=expert_document_path,
-        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])]
-    )
-    title = models.CharField(max_length=100)
-    issuing_organization = models.CharField(max_length=100)
-    issue_date = models.DateField()
-    expiration_date = models.DateField(null=True, blank=True)
-    is_verified = models.BooleanField(default=False)
-    
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = 'Expert Document'
-        verbose_name_plural = 'Expert Documents'
-        ordering = ['-issue_date']
-        unique_together = ('expert', 'document_type', 'title')
-
-    def __str__(self):
-        return f"{self.get_document_type_display()} - {self.title} ({self.expert.user.username})"
