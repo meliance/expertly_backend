@@ -32,6 +32,11 @@ INSTALLED_APPS = [
     "api",
     "accounts",
     "documents",
+    'scheduling',
+    'appointment',
+    'chat',
+    'notification',
+    'feedback',
 ]
 
 MIDDLEWARE = [
