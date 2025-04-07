@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from .models import Schedule, TimeOff
 from .serializers import (
@@ -23,7 +24,7 @@ class ScheduleListView(generics.ListCreateAPIView):
         if self.request.user.user_type == 'expert':
             serializer.save(expert=self.request.user.expert_profile)
         else:
-            raise permissions.PermissionDenied("Only experts can create schedules")
+            raise PermissionDenied("Only experts can create schedules")
 
 class ScheduleDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ScheduleSerializer
@@ -59,7 +60,7 @@ class TimeOffListView(generics.ListCreateAPIView):
         if self.request.user.user_type == 'expert':
             serializer.save(expert=self.request.user.expert_profile)
         else:
-            raise permissions.PermissionDenied("Only experts can create time offs")
+            raise PermissionDenied("Only experts can create time offs")
 
 class TimeOffDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TimeOffSerializer
