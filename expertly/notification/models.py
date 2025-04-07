@@ -1,30 +1,31 @@
 from django.db import models
-from appointment.models import Client, Schedule  # Ensure this import is correct
+from appointment.models import Appointment
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 
-class Appointment(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='appointments')  # Added related_name
-    schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE, related_name='appointments')  # Added related_name
-    status = models.CharField(max_length=20, choices=[
-        ('scheduled', 'Scheduled'),
-        ('completed', 'Completed'),
-        ('canceled', 'Canceled'),
-    ])
-    description = models.TextField()
-
-    def __str__(self):
-        return f'Appointment for {self.client.name} on {self.schedule.start_time}'
+User = get_user_model()
 
 class Notification(models.Model):
-    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='notifications')  # Added related_name
-    title = models.CharField(max_length=200)
+    NOTIFICATION_TYPES = (
+        ('feedback', 'Feedback'),
+        ('appointment', 'Appointment'),
+        ('system', 'System'),
+        ('payment', 'Payment'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, null=True, blank=True)
+    title = models.CharField(max_length=255)
     message = models.TextField()
-    notification_type = models.CharField(max_length=50, choices=[
-        ('info', 'Info'),
-        ('warning', 'Warning'),
-        ('success', 'Success'),
-        ('error', 'Error'),
-    ])
-    created_at = models.DateTimeField(auto_now_add=True)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read']),
+        ]
 
     def __str__(self):
-        return f'Notification: {self.title} - {self.message}'
+        return f"{self.notification_type} notification for {self.user.username}"

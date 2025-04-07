@@ -1,17 +1,10 @@
+# appointment/admin.py
 from django.contrib import admin
-from .models import Client, Schedule, Appointment
-
-@admin.register(Client)
-class ClientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
-    search_fields = ('name',)
-
-@admin.register(Schedule)
-class ScheduleAdmin(admin.ModelAdmin):
-    list_display = ('id', 'expert', 'start_time', 'end_time', 'duration', 'daily_availability')
-    search_fields = ('expert__name',)  # Assuming expert has a name field
+from .models import Appointment
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'client', 'schedule', 'status', 'description')
-    search_fields = ('client__name', 'schedule__expert__name')  # Assuming expert has a name field
+    list_display = ('id', 'client', 'expert', 'status', 'schedule')
+    list_filter = ('status', 'created_at')
+    search_fields = ('client__user__username', 'expert__user__username')
+    raw_id_fields = ('client', 'expert', 'schedule', 'payment')

@@ -85,41 +85,105 @@ class Client(models.Model):
         return f"Client: {self.user.username}"
 
 class Expert(models.Model):
+    CONSULTATION_FIELDS = [
+        ('law', 'Legal Consultation'),
+        ('tech', 'Technology Consultation'),
+        ('financial & business', 'Financial and Business Consultation'),
+        ('personal_dev', 'Personal Development Consultation'),
+    ]
+    
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         primary_key=True,
         related_name='expert_profile'
     )
-    specialization = models.CharField(max_length=100)
-    qualifications = models.TextField()
-    experience_years = models.PositiveIntegerField(blank=True, null=True)
+    
+    # Consultation Fields
+    consultation_fields = models.JSONField(
+        default=list,
+        help_text="List of consultation fields this expert specializes in"
+    )
+    
+    # Professional Details
+    specialization = models.CharField(
+        max_length=100,
+        help_text="Primary professional specialization"
+    )
+    qualifications = models.TextField(
+        help_text="Certifications, degrees, and other qualifications"
+    )
+    experience_years = models.PositiveIntegerField(
+        blank=True, 
+        null=True,
+        help_text="Years of professional experience"
+    )
     hourly_rate = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        validators=[MinValueValidator(0)]
+        validators=[MinValueValidator(0)],
+        help_text="Hourly consultation rate in local currency"
     )
     
     # Status fields
-    is_approved = models.BooleanField(default=False)
-    approval_date = models.DateTimeField(null=True, blank=True)
+    is_approved = models.BooleanField(
+        default=False,
+        help_text="Whether the expert has been approved by admin"
+    )
+    approval_date = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="Date when expert was approved"
+    )
     
     # Rating system
     rating = models.FloatField(
         default=0.0, 
-        validators=[MinValueValidator(0.0), MaxValueValidator(5.0)]
+        validators=[MinValueValidator(0.0), MaxValueValidator(5.0)],
+        help_text="Average rating from 0-5"
     )
-    total_sessions = models.PositiveIntegerField(default=0)
-    
-    # Availability
-    is_available = models.BooleanField(default=True)
-    available_from = models.TimeField(null=True, blank=True)
-    available_to = models.TimeField(null=True, blank=True)
+    total_sessions = models.PositiveIntegerField(
+        default=0,
+        help_text="Total consultation sessions completed"
+    )
     
     class Meta:
         verbose_name = 'Expert'
         verbose_name_plural = 'Experts'
         ordering = ['-is_approved', '-rating']
+        indexes = [
+            models.Index(fields=['consultation_fields'], name='consult_fields_idx'),
+        ]
 
     def __str__(self):
-        return f"Expert: {self.user.username} ({self.specialization})"
+        return f"Expert: {self.user.get_full_name() or self.user.username} ({self.specialization})"
+    
+    def get_consultation_fields_display(self):
+        """Returns human-readable consultation fields"""
+        return ", ".join([dict(self.CONSULTATION_FIELDS).get(field, field) 
+                         for field in self.consultation_fields])
+    
+    def save(self, *args, **kwargs):
+        # Validate consultation_fields contains only valid choices
+        if self.consultation_fields:
+            valid_fields = [choice[0] for choice in self.CONSULTATION_FIELDS]
+            if not all(field in valid_fields for field in self.consultation_fields):
+                raise ValueError("Invalid consultation field provided")
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def display_rate(self):
+        """Formatted hourly rate"""
+        return f"${self.hourly_rate:.2f}/hr"
+    
+    @property
+    def experience_level(self):
+        """Categorize experience level"""
+        if not self.experience_years:
+            return "Not specified"
+        if self.experience_years < 3:
+            return "Junior"
+        if self.experience_years < 7:
+            return "Mid-level"
+        return "Senior"
