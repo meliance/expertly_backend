@@ -4,4 +4,5 @@ from .models import Appointment
 class AppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
-        fields = ['id', 'client', 'schedule', 'status', 'description']
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at', 'status')

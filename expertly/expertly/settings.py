@@ -29,11 +29,14 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
+    "django_filters",
+    ""
     "api",
     "accounts",
     "documents",
     'scheduling',
     'appointment',
+    'payments',
     'chat',
     'notification',
     'feedback',
@@ -107,6 +110,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20
+}   
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -118,6 +126,29 @@ USE_I18N = True
 
 USE_TZ = True
 
+
+# settings.py
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+
+# CHAPA_SECRET_KEY = 'CHASECK_TEST-tUZNyUIl653jrBlgm2lCSV2HiaVdJ3Sf'
+# CHAPA_PUBLIC_KEY = 'CHAPUBK_TEST-tAHZRrANW6BhvjgDQ7MWXwKdhp64hOVO'
+# CHAPA_API_URL = 'https://api.chapa.co/v1/transaction'
+# CHAPA_WEBHOOK_URL = 'http://127.0.0.1:8000/api/payments/webhook/' 
+
+# settings.py
+CHAPA_SECRET_KEY = 'CHASECK_TEST-tUZNyUIl653jrBlgm2lCSV2HiaVdJ3Sf'
+CHAPA_PUBLIC_KEY = 'CHAPUBK_TEST-tAHZRrANW6BhvjgDQ7MWXwKdhp64hOVO'
+CHAPA_API_URL = 'https://api.chapa.co/v1/transaction'
+# For local testing without frontend
+CHAPA_WEBHOOK_URL = 'http://127.0.0.1:8000/api/payments/webhook/'
+CHAPA_RETURN_URL = 'http://127.0.0.1:8000/api/payments/success/' 
+CHAPA_FAILURE_URL = 'http://127.0.0.1:8000/api/payments/fail/'
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = 'notifications@mydomain.com'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

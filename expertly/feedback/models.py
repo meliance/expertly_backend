@@ -1,18 +1,26 @@
 from django.db import models
-from appointment.models import Client, Schedule, Appointment  # Import necessary models
-
-class Expert(models.Model):
-    name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name
+from django.core.validators import MinValueValidator, MaxValueValidator
+from accounts.models import Client, Expert
+from appointment.models import Appointment
 
 class Feedback(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    expert = models.ForeignKey(Expert, on_delete=models.CASCADE)
-    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField()  # Assuming rating is from 1 to 5
-    review = models.TextField()
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='given_feedbacks')
+    expert = models.ForeignKey(Expert, on_delete=models.CASCADE, related_name='received_feedbacks')
+    appointment = models.OneToOneField(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name='feedback'
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    review = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('client', 'appointment')
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f'Feedback from {self.client.name} for {self.expert.name}'
+        return f"Feedback #{self.id} ({self.rating} stars)"

@@ -1,32 +1,40 @@
 from django.db import models
-
-class Expert(models.Model):
-    name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name
+from accounts.models import Expert
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Schedule(models.Model):
-    expert = models.ForeignKey(Expert, on_delete=models.CASCADE)
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    duration = models.DurationField()
-    daily_availability = models.BooleanField(default=False)
-
+    DAY_CHOICES = (
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+        (6, 'Sunday'),
+    )
+    
+    expert = models.ForeignKey(Expert, on_delete=models.CASCADE, related_name='schedules')
+    day_of_week = models.PositiveSmallIntegerField(choices=DAY_CHOICES)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    duration = models.PositiveSmallIntegerField()
+    is_available = models.BooleanField(default=True)
+    
+    class Meta:
+        unique_together = ('expert', 'day_of_week', 'start_time', 'end_time')
+        ordering = ['day_of_week', 'start_time']
+    
     def __str__(self):
-        return f'Schedule for {self.expert.name} from {self.start_time} to {self.end_time}'
+        return f"{self.expert.user.username} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
 
-class Client(models.Model):
-    name = models.CharField(max_length=100)
-
+class TimeOff(models.Model):
+    expert = models.ForeignKey(Expert, on_delete=models.CASCADE, related_name='time_offs')
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField()
+    reason = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['start_datetime']
+    
     def __str__(self):
-        return self.name
-
-class Appointment(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, choices=[('scheduled', 'Scheduled'), ('completed', 'Completed'), ('canceled', 'Canceled')])
-    description = models.TextField()
-
-    def __str__(self):
-        return f'Appointment for {self.client.name} on {self.schedule.start_time}'
+        return f"{self.expert.user.username} - Time off from {self.start_datetime} to {self.end_datetime}"
