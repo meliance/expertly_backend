@@ -1,3 +1,4 @@
+# appointments/models.py
 from django.db import models
 from django.core.exceptions import ValidationError
 from accounts.models import Client, Expert
@@ -28,7 +29,6 @@ class Appointment(models.Model):
         on_delete=models.PROTECT,
         related_name='appointments'
     )
-    # Changed to string reference
     payment = models.OneToOneField(
         'payments.Payment',
         on_delete=models.SET_NULL,
