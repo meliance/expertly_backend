@@ -1,5 +1,9 @@
+<<<<<<< Updated upstream
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+=======
+from rest_framework import generics, permissions
+>>>>>>> Stashed changes
 from .models import Schedule, TimeOff
 from .serializers import (
     ScheduleSerializer, CreateScheduleSerializer,
@@ -20,10 +24,14 @@ class ScheduleListView(generics.ListCreateAPIView):
         return ScheduleSerializer
     
     def perform_create(self, serializer):
+<<<<<<< Updated upstream
         if self.request.user.user_type == 'expert':
             serializer.save(expert=self.request.user.expert_profile)
         else:
             raise permissions.PermissionDenied("Only experts can create schedules")
+=======
+        serializer.save(expert=self.request.user.expert_profile)
+>>>>>>> Stashed changes
 
 class ScheduleDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ScheduleSerializer
@@ -56,10 +64,14 @@ class TimeOffListView(generics.ListCreateAPIView):
         return TimeOffSerializer
     
     def perform_create(self, serializer):
+<<<<<<< Updated upstream
         if self.request.user.user_type == 'expert':
             serializer.save(expert=self.request.user.expert_profile)
         else:
             raise permissions.PermissionDenied("Only experts can create time offs")
+=======
+        serializer.save(expert=self.request.user.expert_profile)
+>>>>>>> Stashed changes
 
 class TimeOffDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TimeOffSerializer

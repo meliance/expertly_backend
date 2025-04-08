@@ -34,12 +34,13 @@ INSTALLED_APPS = [
     "api",
     "accounts",
     "documents",
-    'scheduling',
     'appointment',
     'payments',
     'chat',
     'notification',
     'feedback',
+    "scheduling",
+
 ]
 
 MIDDLEWARE = [
@@ -84,14 +85,13 @@ WSGI_APPLICATION = "expertly.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'expertly',         # Database name 
-        'USER': 'postgres',       # PostgreSQL username
-        'PASSWORD': 'melakmu66',
-        'HOST': 'localhost',    
-        'PORT': '5432',         # Default PostgreSQL port
+        'NAME': 'expertly',
+        'USER': 'postgres',
+        'PASSWORD': 'melakmu66',  # Enclose the password in quotes
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
