@@ -1,5 +1,4 @@
 from django.db import models
-<<<<<<< Updated upstream
 from accounts.models import Expert
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -16,17 +15,16 @@ class Schedule(models.Model):
     
     expert = models.ForeignKey(Expert, on_delete=models.CASCADE, related_name='schedules')
     day_of_week = models.PositiveSmallIntegerField(choices=DAY_CHOICES)
-=======
+
 
 class Schedule(models.Model):
     expert = models.ForeignKey('accounts.Expert', on_delete=models.CASCADE, related_name='schedules')  # Use string reference
     day_of_week = models.PositiveSmallIntegerField(choices=[(0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'), (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')])
->>>>>>> Stashed changes
     start_time = models.TimeField()
     end_time = models.TimeField()
     duration = models.PositiveSmallIntegerField()
     is_available = models.BooleanField(default=True)
-<<<<<<< Updated upstream
+
     
     class Meta:
         unique_together = ('expert', 'day_of_week', 'start_time', 'end_time')
@@ -46,7 +44,7 @@ class TimeOff(models.Model):
     
     def __str__(self):
         return f"{self.expert.user.username} - Time off from {self.start_datetime} to {self.end_datetime}"
-=======
+
 
     class Meta:
         unique_together = ('expert', 'day_of_week', 'start_time', 'end_time')
@@ -60,4 +58,4 @@ class TimeOff(models.Model):
 
     class Meta:
         ordering = ['start_datetime']
->>>>>>> Stashed changes
+

@@ -1,79 +1,44 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from accounts.models import Client, Expert
+from accounts.models import Expert, Client
 from scheduling.models import Schedule
 
 class Appointment(models.Model):
-    STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-        ('payment_pending', 'Payment Pending'),
+    # Your fields here
+    pass
+class Schedule(models.Model):
+    DAY_CHOICES = (
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+        (6, 'Sunday'),
     )
     
-    client = models.ForeignKey(
-        Client,
-        on_delete=models.CASCADE,
-        related_name='client_appointments'
-    )
-    expert = models.ForeignKey(
-        Expert,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-    schedule = models.ForeignKey(
-        Schedule,
-        on_delete=models.PROTECT,
-        related_name='appointments'
-    )
-    # Changed to string reference
-    payment = models.OneToOneField(
-        'payments.Payment',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='appointment_link'
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending'
-    )
-    description = models.TextField(default='', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    expert = models.ForeignKey(Expert, on_delete=models.CASCADE, related_name='schedules')
+    day_of_week = models.PositiveSmallIntegerField(choices=DAY_CHOICES)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    duration = models.PositiveSmallIntegerField()
+    is_available = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['-created_at']
-        unique_together = [
-            ('client', 'schedule'),
-            ('expert', 'schedule')
-        ]
+        unique_together = ('expert', 'day_of_week', 'start_time', 'end_time')
+        ordering = ['day_of_week', 'start_time']
 
     def __str__(self):
-        expert_name = self.expert.user.username if self.expert else "No Expert"
-        return f"Appointment #{self.id} - {self.client.user.username} with {expert_name}"
+        return f"{self.expert.user.username} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
 
-    def clean(self):
-        """Validate appointment constraints"""
-        if self.status == 'confirmed' and not self.payment:
-            raise ValidationError("You must complete the payment")
-        
-        if self.status == 'completed' and not self.has_paid:
-            raise ValidationError("Cannot complete unpaid appointments")
+class TimeOff(models.Model):
+    expert = models.ForeignKey(Expert, on_delete=models.CASCADE, related_name='time_offs')
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField()
+    reason = models.TextField(blank=True, null=True)
 
-    @property
-    def has_paid(self):
-        """Safely check payment status without direct import"""
-        return hasattr(self, 'payment') and self.payment and self.payment.status == 'completed'
+    class Meta:
+        ordering = ['start_datetime']
 
-    def save(self, *args, **kwargs):
-        """Handle status transitions"""
-        self.full_clean()
-        
-        if self.has_paid and self.status == 'pending':
-            self.status = 'confirmed'
-            
-        super().save(*args, **kwargs)
+    def __str__(self):
+        return f"{self.expert.user.username} - Time off from {self.start_datetime} to {self.end_datetime}"
