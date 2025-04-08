@@ -244,56 +244,66 @@ class LoginSerializer(serializers.Serializer):
         }
 
 class RegisterSerializer(serializers.ModelSerializer):
-    def create(self, validated_data):
-        validated_data.pop('password2')
-        user_type = validated_data.get('user_type', 'client')
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            user_type=user_type,
-            phone_number=validated_data.get('phone_number', ''),
-        )
-        
-        if user_type == 'expert':
-            Expert.objects.create(user=user)
-        elif user_type == 'client':
-            Client.objects.create(user=user)
-            
-        return user
     password = serializers.CharField(
         write_only=True,
         required=True,
         validators=[validate_password]
     )
     password2 = serializers.CharField(write_only=True, required=True)
-    
+    hourly_rate = serializers.DecimalField(
+        max_digits=6, 
+        decimal_places=2, 
+        required=False,
+        allow_null=True
+    )
+    specialization = serializers.CharField(required=False, allow_blank=True)
+    qualifications = serializers.CharField(required=False, allow_blank=True)
+    experience_years = serializers.IntegerField(required=False, allow_null=True)
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password2', 'first_name', 
-                 'last_name', 'user_type', 'phone_number']
+        fields = [
+            'username', 'email', 'password', 'password2',
+            'first_name', 'last_name', 'user_type', 'phone_number',
+            'hourly_rate', 'specialization', 'qualifications', 'experience_years'
+        ]
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True},
         }
-    
+
     def validate(self, attrs):
+        attrs['user_type'] = attrs.get('user_type', '').lower()
+        
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
+
+        if attrs['user_type'] == 'expert':
+            if not attrs.get('specialization'):
+                raise serializers.ValidationError({
+                    "specialization": "Specialization is required for experts"
+                })
+            attrs.setdefault('hourly_rate', 0)  # Ensure default if missing
+            attrs.setdefault('experience_years', 0)  # Ensure default if missing
+
         return attrs
-    
+
     def create(self, validated_data):
         validated_data.pop('password2')
-        user_type = validated_data.get('user_type', 'client')
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            user_type=user_type,
-            phone_number=validated_data.get('phone_number', ''),
-        )
+        user_type = validated_data.pop('user_type')
+        
+        expert_data = {
+            'hourly_rate': float(validated_data.pop('hourly_rate', 0)),
+            'experience_years': int(validated_data.pop('experience_years', 0)),
+            'specialization': validated_data.pop('specialization', 'General'),
+            'qualifications': validated_data.pop('qualifications', ''),
+        }
+
+        user = User.objects.create_user(**validated_data, user_type=user_type)
+        
+        if user_type == 'expert':
+            Expert.objects.create(user=user, **expert_data)
+        elif user_type == 'client':
+            Client.objects.create(user=user)
+            
         return user

@@ -123,9 +123,15 @@ class ExpertAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.user.save()
 
 class ExpertListView(generics.ListAPIView):
-    queryset = Expert.objects.filter(is_approved=True, user__is_active=True, user__user_type="Expert" )
     serializer_class = ExpertSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return Expert.objects.filter(
+            is_approved=True,
+            user__is_active=True,
+            user__user_type__iexact="expert"
+        ).select_related('user').prefetch_related('documents')
 
 class ExpertDetailView(generics.RetrieveUpdateAPIView):
     queryset = Expert.objects.filter(is_approved=True, user__is_active=True)
@@ -137,10 +143,20 @@ class ExpertDetailView(generics.RetrieveUpdateAPIView):
             return ExpertApprovalSerializer
         return ExpertSerializer
 
-class AdminExpertApprovalView(generics.ListAPIView):
-    queryset = Expert.objects.filter(is_approved=False, user__is_active=True)
-    serializer_class = ExpertSerializer
+class ExpertApprovalView(APIView):
     permission_classes = [permissions.IsAdminUser]
+    
+    def post(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk, user_type="Expert")
+            expert, created = Expert.objects.get_or_create(user=user)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found or not an expert'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        
+        expert.is_approved = True
+        expert.save()
+        return Response({'status': 'expert approved'}, status=status.HTTP_200_OK)
 
 class AdminUserListView(generics.ListAPIView):
     queryset = User.objects.filter(is_active=True)

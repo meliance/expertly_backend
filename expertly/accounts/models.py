@@ -104,26 +104,12 @@ class Expert(models.Model):
         default=list,
         help_text="List of consultation fields this expert specializes in"
     )
-    
-    # Professional Details
-    specialization = models.CharField(
-        max_length=100,
-        help_text="Primary professional specialization"
-    )
-    qualifications = models.TextField(
-        help_text="Certifications, degrees, and other qualifications"
-    )
-    experience_years = models.PositiveIntegerField(
-        blank=True, 
-        null=True,
-        help_text="Years of professional experience"
-    )
-    hourly_rate = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2,
-        validators=[MinValueValidator(0)],
-        help_text="Hourly consultation rate in local currency"
-    )
+    specialization = models.CharField(max_length=100, blank=True, null=True)
+    qualifications = models.TextField(blank=True, null=True)
+    hourly_rate = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    experience_years = models.IntegerField(blank=True, null=True)
+    hourly_rate = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    experience_years = models.IntegerField(default=0)
     
     # Status fields
     is_approved = models.BooleanField(

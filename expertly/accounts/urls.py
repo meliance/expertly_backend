@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     RegisterView, LoginView, UserProfileView,UserListView, 
     ClientProfileView, ExpertProfileView, ChangePasswordView,
-    ExpertListView, ExpertDetailView, AdminExpertApprovalView,
+    ExpertListView, ExpertDetailView, ExpertApprovalView,
     AdminUserListView, AdminUserDetailView, ClientDetailView,
     ExpertPublicProfileView, ExpertAdminDetailView,
     ExpertDocumentListView, ExpertDocumentDetailView,
@@ -30,8 +30,7 @@ urlpatterns = [
     path('experts/<int:pk>/', ExpertDetailView.as_view(), name='expert-detail'),
     path('experts/public/<int:pk>/', ExpertPublicProfileView.as_view(), name='expert-public-profile'),
     path('experts/admin/<int:pk>/', ExpertAdminDetailView.as_view(), name='expert-admin-detail'),
-    path('experts/approvals/', AdminExpertApprovalView.as_view(), name='expert-approval-list'),
-    
+    path('admin/experts/<int:pk>/approve/', ExpertApprovalView.as_view(), name='expert-approve'),
     # Expert document URLs
     path('experts/<int:expert_id>/documents/', ExpertDocumentListView.as_view(), name='expert-document-list'),
     path('documents/<int:pk>/', ExpertDocumentDetailView.as_view(), name='expert-document-detail'),
