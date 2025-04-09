@@ -7,7 +7,9 @@ from .views import (
     ExpertPublicProfileView, ExpertAdminDetailView,
     ExpertDocumentListView, ExpertDocumentDetailView,
     ExpertDocumentVerificationView
+    
 )
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     # Authentication
@@ -40,4 +42,9 @@ urlpatterns = [
     # Admin URLs
     path('admin/users/', AdminUserListView.as_view(), name='admin-user-list'),
     path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
+    # urls.py
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Include your other URLs
+
 ]

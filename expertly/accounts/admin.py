@@ -1,6 +1,5 @@
 from django.contrib import admin
-from django.utils.html import format_html
-
+from django.utils import timezone
 from .models import User, Expert
 
 admin.site.register(User)
@@ -8,7 +7,7 @@ admin.site.register(User)
 @admin.register(Expert)
 class ExpertAdmin(admin.ModelAdmin):
     list_display = (
-        'user_email', 
+        'user_email',
         'full_name',
         'specialization',
         'consultation_fields_display',

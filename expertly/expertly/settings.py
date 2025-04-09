@@ -39,7 +39,10 @@ INSTALLED_APPS = [
     'chat',
     'notification',
     'feedback',
-    "scheduling",
+    'scheduling',
+    'search',
+    
+
 
 ]
 

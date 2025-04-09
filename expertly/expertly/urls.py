@@ -11,6 +11,8 @@ urlpatterns = [
     path("api/payments/", include("payments.urls")),
     path('api/notification/', include('notification.urls')),
     path('api/feedback/', include('feedback.urls')),
+    path('api/', include('search.urls')),
+    
 ]
 
     # Replace 'your_app_name' with the actual name of your app

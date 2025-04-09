@@ -1,10 +1,6 @@
 from rest_framework import generics, permissions
-from rest_framework.response import Response
 from .models import Schedule, TimeOff
-from .serializers import (
-    ScheduleSerializer, CreateScheduleSerializer,
-    TimeOffSerializer, CreateTimeOffSerializer
-)
+from .serializers import ScheduleSerializer, CreateScheduleSerializer, TimeOffSerializer, CreateTimeOffSerializer
 
 class ScheduleListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
