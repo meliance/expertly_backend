@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,13 +10,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-=#uq^q8(ktnd*1xcz_z0e77qpe5nwj$u%!-+0(4uddo8i_-z44"
-
+# SECRET_KEY = "django-insecure-=#uq^q8(ktnd*1xcz_z0e77qpe5nwj$u%!-+0(4uddo8i_-z44"
+SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
+DEBUG = os.environ.get("DEBUG", "False".lower()) == "true"
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 
 # Application definition
 
@@ -85,12 +84,15 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'expertly',         # Database name 
-        'USER': 'postgres',       # PostgreSQL username
-        'PASSWORD': 'melakmu66',
-        'HOST': 'localhost',    
+        'USER': 'expertly_user',       # PostgreSQL username
+        'PASSWORD': '1inUeg1d1pAnNGzOofxGwPDETBfVbvAt',
+        'HOST': 'dpg-cvrm9l8gjchc73bd3130-a/expertly',    
         'PORT': '5432',         # Default PostgreSQL port
     }
 }
+database_url = os.environ.get("DATABASE_URL")
+
+DATABASES["default"] = dj_database_url.parse("database_url")
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
