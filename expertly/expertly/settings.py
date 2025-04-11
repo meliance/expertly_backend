@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 import dj_database_url
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -82,13 +85,15 @@ WSGI_APPLICATION = "expertly.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'expertly',         # Database name 
-        'USER': 'expertly_user',       # PostgreSQL username
+        'NAME': 'expertly',
+        'USER': 'expertly_user',
         'PASSWORD': '1inUeg1d1pAnNGzOofxGwPDETBfVbvAt',
-        'HOST': 'dpg-cvrm9l8gjchc73bd3130-a/expertly',    
-        'PORT': '5432',         # Default PostgreSQL port
+        'HOST': 'dpg-cvrm9l8gjchc73bd3130-a.oregon-postgres.render.com',
+        'PORT': '5432',
     }
 }
+
+
 database_url = os.environ.get("DATABASE_URL")
 if database_url:
     DATABASES["default"] = dj_database_url.parse(database_url)
