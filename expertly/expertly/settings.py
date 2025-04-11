@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "django_filters",
-    # "api",
+    "api",
     "accounts",
     "documents",
     'scheduling',
